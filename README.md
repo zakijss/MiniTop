@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/hero.jpg" alt="A Miyoo Mini Plus standing next to a coffee mug and a notebook, showing running programs in MiniTop" width="100%"></p>
+<p align="center"><img src="docs/hero.jpg" alt="A grey Miyoo Mini Plus on a stand on a sunlit window sill, showing running programs in MiniTop, with two more handhelds beside it" width="100%"></p>
 
 [![CI](https://github.com/zakijss/MiniTop/actions/workflows/ci.yml/badge.svg)](https://github.com/zakijss/MiniTop/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/zakijss/MiniTop)](https://github.com/zakijss/MiniTop/releases)
@@ -15,7 +15,7 @@ Tasks and maintenance for a Miyoo Mini Plus: what's running, what starts at boot
 - `clocksync`: a boot script that sets the clock from HTTPS servers once Wi-Fi is up, since Onion's own time sync relies on a service that no longer answers.
 
 
-<p align="center"><img src="docs/desk.jpg" alt="MiniTop running on a Miyoo Mini Plus lying on a desk" width="100%"></p>
+<p align="center"><img src="docs/desk.jpg" alt="A white Miyoo Mini Plus on a wooden stand next to a mug, showing running programs in MiniTop" width="100%"></p>
 
 ## Using it
 
