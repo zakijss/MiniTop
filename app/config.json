@@ -1,0 +1,6 @@
+{
+	"label":	"MiniTop",
+	"icon":	"/mnt/SDCARD/App/MiniTop/icon.png",
+	"launch":	"launch.sh",
+	"description":	"What's running, and what starts at boot"
+}
