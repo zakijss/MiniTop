@@ -6,10 +6,12 @@
 
 # MiniTop
 
-What's running on a Miyoo Mini Plus, and what starts at boot. It also keeps the clock right. Part of [MiniDeck](https://github.com/zakijss/MiniDeck).
+Tasks and maintenance for a Miyoo Mini Plus: what's running, what starts at boot and what fills the SD card. It also keeps the clock right. Part of [MiniDeck](https://github.com/zakijss/MiniDeck).
 
 - Running programs with their memory and CPU use; **A** ends one (Onion's own processes are protected). **Y** sorts them by CPU, memory or name and can hide Onion's own.
 - The scripts Onion runs at boot, each turned on or off.
+- Storage: free space on the card, and how much each folder takes, largest first (Roms by system, App by app). **A** opens a folder; **X** deletes the selected file or folder after asking.
+- Clean up (**X** on Storage): MiniMart's downloads, MiniTape's saved songs, Onion's game list caches, logs, macOS leftovers (`._` files, `.DS_Store`, `.Trashes`) and empty folders. Each one lists exactly what it deletes before you confirm. Games, saves and settings are never part of a clean-up.
 - `clocksync`: a boot script that sets the clock from HTTPS servers once Wi-Fi is up, since Onion's own time sync relies on a service that no longer answers.
 
 
@@ -17,7 +19,7 @@ What's running on a Miyoo Mini Plus, and what starts at boot. It also keeps the 
 
 ## Using it
 
-**L1**/**R1** switch between the running programs and the startup scripts. For daylight saving, put a zone name such as `Europe/Berlin` in `App/MiniTop/timezone`. Turn clocksync off in the startup tab.
+**L1**/**R1** move between Running, Startup and Storage. Measuring the card takes a few seconds and runs in the background. The card has no trash, so a delete is final. MiniTop won't delete Onion's files, the card's top-level folders, whole app folders (remove apps in MiniMart, which also takes out their boot scripts), MiniKey's vault, or any key or `.enc` file. For daylight saving, put a zone name such as `Europe/Berlin` in `App/MiniTop/timezone`. Turn clocksync off in the startup tab.
 
 ## Install
 

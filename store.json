@@ -1,7 +1,7 @@
 {
   "name": "MiniTop",
   "folder": "MiniTop",
-  "desc": "What's running, and what starts at boot",
+  "desc": "Tasks and maintenance: running programs, startup, storage",
   "repo": "zakijss/MiniTop",
   "license": "MIT",
   "version": "__VERSION__",
@@ -11,7 +11,8 @@
   "strip": "App/",
   "released": "__RELEASED__",
   "facts": [
-    "Protects Onion's own processes from being ended."
+    "Protects Onion's own processes from being ended.",
+    "Deletes files on the card only after asking, and never Onion's files, whole app folders or key files."
   ],
   "system": "Adds a boot script (.tmp_update/startup/clocksync.sh) that sets the clock from HTTPS servers after Wi-Fi is up. Turn it off in MiniTop > Startup.",
   "boot": [
