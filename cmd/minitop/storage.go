@@ -19,6 +19,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
+	"time"
 )
 
 // sdcard is the card's root; TASKS_SDCARD replaces it in tests.
@@ -78,6 +79,10 @@ type Scan struct {
 	Tree     *Dir
 	Cleanups []*Cleanup
 	Errors   int // folders that couldn't be read
+	Measured time.Time
+	// Saved: the measurement kept from an earlier session (see
+	// savedscan.go): the tree only, no clean-ups.
+	Saved bool
 }
 
 // Cleanup returns the clean-up with the given ID.
@@ -203,7 +208,7 @@ func measure(ctx context.Context, root string, prog *Progress) (*Scan, error) {
 	if _, err := w.dir(tree, "", false, false); err != nil {
 		return nil, err
 	}
-	s := &Scan{Root: root, Tree: tree, Errors: w.errors}
+	s := &Scan{Root: root, Tree: tree, Errors: w.errors, Measured: time.Now()}
 	for _, id := range cleanupOrder {
 		s.Cleanups = append(s.Cleanups, w.c[id])
 	}
@@ -589,8 +594,10 @@ func count(n int64) string {
 // the last result for the session.
 type measurer struct {
 	root   string
+	dir    string // where the last measurement is kept between sessions ("": not kept)
 	mu     sync.Mutex
 	scan   *Scan
+	old    *Scan // the kept measurement, shown until scan is done
 	err    error
 	prog   *Progress
 	done   chan struct{} // closed when the running measurement ends; nil if none
@@ -604,6 +611,11 @@ func (m *measurer) start() {
 	if m.done != nil || m.scan != nil {
 		return
 	}
+	if m.old == nil && m.dir != "" {
+		if s, err := loadScan(m.dir, m.root); err == nil {
+			m.old = s
+		}
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	m.prog, m.cancel, m.err = &Progress{}, cancel, nil
 	done := make(chan struct{})
@@ -611,9 +623,15 @@ func (m *measurer) start() {
 	prog := m.prog
 	go func() {
 		s, err := measure(ctx, m.root, prog)
+		if err == nil && ctx.Err() == nil && m.dir != "" {
+			saveScan(m.dir, s) // best effort: the page works without it
+		}
 		m.mu.Lock()
 		if ctx.Err() == nil {
 			m.scan, m.err = s, err
+			if err == nil {
+				m.old = nil
+			}
 		}
 		m.done = nil
 		m.mu.Unlock()
@@ -648,6 +666,27 @@ func (m *measurer) state() (*Scan, *Progress, <-chan struct{}, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.scan, m.prog, m.done, m.err
+}
+
+// view is the measurement to show: this session's, or else the kept one.
+func (m *measurer) view() *Scan {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.scan != nil {
+		return m.scan
+	}
+	return m.old
+}
+
+// keep saves s again after a delete changed it, if it is this session's
+// measurement.
+func (m *measurer) keep(s *Scan) {
+	m.mu.Lock()
+	cur := m.scan
+	m.mu.Unlock()
+	if s == cur && s != nil && m.dir != "" {
+		saveScan(m.dir, s)
+	}
 }
 
 // wait blocks until no measurement is running.

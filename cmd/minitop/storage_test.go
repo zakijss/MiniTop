@@ -665,4 +665,40 @@ func TestStorageScreens(t *testing.T) {
 	shot("10-cleanup", func(tk *tasks) { measured(tk); tk.cleanup() })
 	shot("11-cleanup-list", func(tk *tasks) { s := measured(tk); tk.cleanupList(s, s.Cleanup("junk")) })
 	shot("12-cleanup-confirm", func(tk *tasks) { s := measured(tk); tk.runCleanup(s, s.Cleanup("minimart")) })
+	// the kept measurement, shown while the card is measured again
+	kept := t.TempDir()
+	shot("13-storage-kept", func(tk *tasks) {
+		s := measured(tk)
+		s.Measured = time.Now().Add(-5 * time.Hour)
+		saveScan(kept, s)
+		old, _ := loadScan(kept, root)
+		p := &Progress{}
+		p.Files.Store(4321)
+		tk.disk.scan, tk.disk.old, tk.disk.prog, tk.disk.done = nil, old, p, make(chan struct{})
+		tk.drawStorage()
+	})
+	game := blob(4, 300<<10)
+	for _, p := range []string{"Roms/GBA/Pokemon Emerald.gba", "Roms/GBA/Hacks/Pokemon Emerald.gba", "Roms/PS/FF7 (Disc 1).chd", "Roms/PS/FF7/FF7 (Disc 1).chd"} {
+		writeAt(t, root, p, game)
+	}
+	writeAt(t, root, "Roms/PS/FF7/FF7.m3u", []byte("FF7 (Disc 1).chd\n"))
+	groups, err := findDuplicates(context.Background(), root, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	finished := func() *dupSearch {
+		end := make(chan struct{})
+		close(end)
+		return &dupSearch{groups: groups, done: true, prog: &DupProgress{}, end: end, cancel: func() {}}
+	}
+	shot("14-duplicates-searching", func(tk *tasks) {
+		p := &DupProgress{}
+		p.Files.Store(18234)
+		p.Total.Store(2 << 30)
+		p.Read.Store(700 << 20)
+		tk.dupes = &dupSearch{prog: p, end: make(chan struct{}), cancel: func() {}}
+		tk.duplicates()
+	})
+	shot("15-duplicates", func(tk *tasks) { tk.dupes = finished(); tk.duplicates() })
+	shot("16-duplicates-game", func(tk *tasks) { tk.dupes = finished(); tk.dupGroup(0) })
 }
