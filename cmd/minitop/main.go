@@ -1,5 +1,6 @@
-// MiniTop shows what's running on the Miyoo (memory and CPU per program) and
-// can end a program; its second tab turns startup items on and off.
+// MiniTop is tasks and maintenance for the Miyoo: what's running (memory and
+// CPU per program, and ending one), the startup items, turned on and off,
+// and what fills the SD card, with clean-ups that free space.
 package main
 
 import (
@@ -7,6 +8,7 @@ import (
 	"image"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/zakijss/minideck/appdir"
@@ -22,7 +24,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer scr.Close()
-	t := &tasks{scr: scr, input: ui.Input(), smp: newSampler(), dir: appdir.Dir()}
+	t := &tasks{scr: scr, input: ui.Input(), smp: newSampler(), dir: appdir.Dir(), disk: &measurer{root: sdcard(), dir: appdir.Dir()}}
 	t.cfg = loadSettings(t.dir)
 	t.smp.Sample() // first sample: CPU needs two
 	t.procs = t.smp.Sample()
@@ -30,18 +32,35 @@ func main() {
 }
 
 type tasks struct {
-	scr     *ui.Screen
-	input   <-chan ui.Event
-	smp     *sampler
-	procs   []Proc // every program, busiest first
-	shown   []Proc // the ones listed, in Settings' order
-	dir     string
-	cfg     Settings
-	startup bool // which tab
-	run1    ui.List
-	run2    ui.List
-	items   []StartItem
+	scr   *ui.Screen
+	input <-chan ui.Event
+	smp   *sampler
+	procs []Proc // every program, busiest first
+	shown []Proc // the ones listed, in Settings' order
+	dir   string
+	cfg   Settings
+	page  int // pageRunning, pageStartup or pageStorage
+	run1  ui.List
+	run2  ui.List
+	run3  ui.List
+	items []StartItem
+	disk  *measurer
+	// the Storage page's rows, for the scan they came from
+	rootScan *Scan
+	rootEnts []Entry
+	rootMore int
+	stale    bool // a delete failed part way: measure again
+	dupes    *dupSearch
+	dmu      sync.Mutex // guards dupes' results
 }
+
+// The pages L1 and R1 move between, in order.
+const (
+	pageRunning = iota
+	pageStartup
+	pageStorage
+	pages
+)
 
 func mb(b int64) string { return fmt.Sprintf("%.1f MB", float64(b)/(1<<20)) }
 
@@ -49,14 +68,25 @@ func (t *tasks) run() {
 	tick := time.NewTicker(2 * time.Second)
 	defer tick.Stop()
 	for {
-		if t.startup {
+		// while the card is measured, the Storage page redraws its progress
+		var measuring <-chan struct{}
+		var redraw <-chan time.Time
+		switch t.page {
+		case pageStartup:
 			t.drawStartup()
-		} else {
+		case pageStorage:
+			t.drawStorage()
+			if _, _, done, _ := t.disk.state(); done != nil {
+				measuring, redraw = done, time.After(250*time.Millisecond)
+			}
+		default:
 			t.drawRunning()
 		}
 		select {
+		case <-measuring:
+		case <-redraw:
 		case <-tick.C:
-			if !t.startup {
+			if t.page == pageRunning {
 				t.procs = t.smp.Sample()
 			}
 		case ev, ok := <-t.input:
@@ -70,30 +100,57 @@ func (t *tasks) run() {
 			case ui.B, ui.Menu:
 				return
 			case ui.L1, ui.R1:
-				t.startup = !t.startup
-				if t.startup {
-					t.items = StartItems()
-				}
+				t.turn(ev.Button == ui.R1)
 			case ui.A:
-				if t.startup {
+				switch t.page {
+				case pageStartup:
 					t.toggle()
-				} else {
+				case pageStorage:
+					t.openStorage()
+				default:
 					t.end()
 				}
 			case ui.X:
-				t.procs = t.smp.Sample()
+				if t.page == pageStorage {
+					t.cleanup()
+				} else {
+					t.procs = t.smp.Sample()
+				}
 			case ui.Y:
-				t.settings()
+				if t.page == pageStorage {
+					t.duplicates()
+				} else {
+					t.settings()
+				}
 			case ui.Select:
 				t.scr.Appearance(t.input)
 			default:
-				if t.startup {
+				switch t.page {
+				case pageStartup:
 					t.run2.Handle(ev)
-				} else {
+				case pageStorage:
+					t.run3.Handle(ev)
+				default:
 					t.run1.Handle(ev)
 				}
 			}
 		}
+	}
+}
+
+// turn moves to the next page (R1) or the one before (L1), wrapping
+// around, and loads what the page shows.
+func (t *tasks) turn(next bool) {
+	if next {
+		t.page = (t.page + 1) % pages
+	} else {
+		t.page = (t.page + pages - 1) % pages
+	}
+	switch t.page {
+	case pageStartup:
+		t.items = StartItems()
+	case pageStorage:
+		t.disk.start()
 	}
 }
 
@@ -182,7 +239,7 @@ func (t *tasks) end() {
 func (t *tasks) drawStartup() {
 	s := t.scr
 	top := s.StaticFrame("Startup", "At boot: "+OnionStartApp()+" (change in Tweaks › System)",
-		ui.Hint{Button: "A", Label: "On / off"}, ui.Hint{Button: "L1", Label: "Running"}, ui.AppearanceHint, ui.Hint{Button: "B", Label: "Exit"})
+		ui.Hint{Button: "A", Label: "On / off"}, ui.Hint{Button: "R1", Label: "Storage"}, ui.AppearanceHint, ui.Hint{Button: "B", Label: "Exit"})
 	var items []ui.Item
 	for _, it := range t.items {
 		state := "Off"

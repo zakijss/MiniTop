@@ -6,11 +6,26 @@ All notable changes are listed here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-02
+
+### Added
+
+- Storage page (**R1** from Startup): free space, folder sizes largest first, and deleting a file or folder after asking. It refuses Onion's files, the card's top level, whole app folders, MiniKey and key or `.enc` files.
+- Clean up (**X** on Storage): MiniMart downloads, MiniTape songs, game list caches, logs, macOS leftovers and empty folders, each listed in full before anything is deleted.
+- Storage opens at once with the last measurement (kept in `storage.json`, labelled with its age) and measures again in the background. Clean up waits for the new measurement, so it never deletes from an old list.
+- Duplicates (**Y** on Storage): games under `Roms` that are byte for byte the same (same size, same first and last 64 KB, then the same SHA-1), the ones wasting most space first. X deletes one copy after asking; the last copy can't be deleted, and neither can a disc that a `.cue`, `.m3u`, `.gdi` or `.ccd` in its folder names. Ports, ScummVM games, box art and `.bin` disc tracks aren't looked at. Onion's game list for that system is refreshed.
+
+### Changed
+
+- **L1**/**R1** now cycle through Running, Startup and Storage.
+- Requires MiniDeck 1.0.1.
+
 ## [1.0.0] - 2026-11-02
 
 ### Added
 
 - The first release: running programs, startup scripts, `clocksync`, and settings to sort the programs by CPU, memory or name and to hide Onion's own.
 
-[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/zakijss/MiniTop/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/zakijss/MiniTop/releases/tag/v1.0.0
