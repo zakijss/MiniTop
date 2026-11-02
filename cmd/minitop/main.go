@@ -8,6 +8,7 @@ import (
 	"image"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/zakijss/minideck/appdir"
@@ -23,7 +24,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer scr.Close()
-	t := &tasks{scr: scr, input: ui.Input(), smp: newSampler(), dir: appdir.Dir(), disk: &measurer{root: sdcard()}}
+	t := &tasks{scr: scr, input: ui.Input(), smp: newSampler(), dir: appdir.Dir(), disk: &measurer{root: sdcard(), dir: appdir.Dir()}}
 	t.cfg = loadSettings(t.dir)
 	t.smp.Sample() // first sample: CPU needs two
 	t.procs = t.smp.Sample()
@@ -49,6 +50,8 @@ type tasks struct {
 	rootEnts []Entry
 	rootMore int
 	stale    bool // a delete failed part way: measure again
+	dupes    *dupSearch
+	dmu      sync.Mutex // guards dupes' results
 }
 
 // The pages L1 and R1 move between, in order.
@@ -114,7 +117,11 @@ func (t *tasks) run() {
 					t.procs = t.smp.Sample()
 				}
 			case ui.Y:
-				t.settings()
+				if t.page == pageStorage {
+					t.duplicates()
+				} else {
+					t.settings()
+				}
 			case ui.Select:
 				t.scr.Appearance(t.input)
 			default:

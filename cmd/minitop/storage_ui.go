@@ -90,7 +90,7 @@ func (t *tasks) drawStorage() {
 	s := t.scr
 	sub, free, total := storageSub(t.disk.root)
 	top := s.StaticFrame("Storage", sub,
-		ui.Hint{Button: "A", Label: "Open"}, ui.Hint{Button: "X", Label: "Clean up"}, ui.Hint{Button: "R1", Label: "Running"}, ui.AppearanceHint, ui.Hint{Button: "B", Label: "Exit"})
+		ui.Hint{Button: "A", Label: "Open"}, ui.Hint{Button: "X", Label: "Clean up"}, ui.Hint{Button: "Y", Label: "Duplicates"}, ui.Hint{Button: "B", Label: "Exit"})
 	card := image.Rect(20, top, ui.W-26, top+62)
 	s.Panel(card, 12)
 	pct := 0.0
@@ -111,7 +111,17 @@ func (t *tasks) drawStorage() {
 	s.Bar(image.Rect(card.Min.X+16, card.Max.Y-22, card.Max.X-16, card.Max.Y-10), pct/100, ui.Level(pct))
 	area := image.Rect(20, card.Max.Y+10, ui.W-26, ui.H-58)
 
-	scan, prog, done, err := t.disk.state()
+	_, prog, done, err := t.disk.state()
+	scan := t.disk.view()
+	if scan != nil && scan.Saved {
+		// the kept measurement, while the card is measured again
+		note := "From " + ago(scan.Measured, time.Now())
+		if done != nil {
+			note += " · measuring again: " + count(prog.Files.Load()) + " files"
+		}
+		s.Text(area.Min.X+4, area.Min.Y-2, ui.Fit(ui.Small, note, area.Dx()-8), ui.Small, ui.Muted)
+		area.Min.Y += ui.LineHeight(ui.Small) + 2
+	}
 	switch {
 	case scan == nil && done != nil:
 		t.drawMeasuring(area, prog)
@@ -152,7 +162,7 @@ func (t *tasks) drawMeasuring(r image.Rectangle, p *Progress) {
 // openStorage opens the selected row of the Storage page: a folder's
 // contents, or the delete question for a file.
 func (t *tasks) openStorage() {
-	scan, _, _, _ := t.disk.state()
+	scan := t.disk.view()
 	if scan == nil || t.rootScan != scan || t.run3.Sel >= len(t.rootEnts) {
 		return
 	}
@@ -259,6 +269,7 @@ func (t *tasks) delete(scan *Scan, e Entry) {
 		return
 	}
 	scan.Forget(e.Path, e.Size, 1, e.Dir)
+	t.disk.keep(scan)
 }
 
 // next waits for input; while a measurement runs (done is not nil) it

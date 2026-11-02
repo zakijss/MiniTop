@@ -12,6 +12,8 @@ All notable changes are listed here. The format follows
 
 - Storage page (**R1** from Startup): free space, folder sizes largest first, and deleting a file or folder after asking. It refuses Onion's files, the card's top level, whole app folders, MiniKey and key or `.enc` files.
 - Clean up (**X** on Storage): MiniMart downloads, MiniTape songs, game list caches, logs, macOS leftovers and empty folders, each listed in full before anything is deleted.
+- Storage opens at once with the last measurement (kept in `storage.json`, labelled with its age) and measures again in the background. Clean up waits for the new measurement, so it never deletes from an old list.
+- Duplicates (**Y** on Storage): games under `Roms` that are byte for byte the same (same size, same first and last 64 KB, then the same SHA-1), the ones wasting most space first. X deletes one copy after asking; the last copy can't be deleted, and neither can a disc that a `.cue`, `.m3u`, `.gdi` or `.ccd` in its folder names. Ports, ScummVM games, box art and `.bin` disc tracks aren't looked at. Onion's game list for that system is refreshed.
 
 ### Changed
 
