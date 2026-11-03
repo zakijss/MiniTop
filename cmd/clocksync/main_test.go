@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
@@ -113,6 +114,28 @@ func TestQueryHEAD(t *testing.T) {
 	}
 	if rtt := recv.Sub(sent); rtt < 50*time.Millisecond || rtt > 500*time.Millisecond {
 		t.Errorf("round trip %v, want about 50 ms", rtt)
+	}
+}
+
+func TestQueryCapsReply(t *testing.T) {
+	client, server := net.Pipe()
+	defer client.Close()
+	defer server.Close()
+	go func() {
+		http.ReadRequest(bufio.NewReader(server))
+		fmt.Fprint(server, "HTTP/1.1 200 OK\r\n")
+		line := []byte("X-Pad: " + strings.Repeat("a", 1000) + "\r\n")
+		for {
+			if _, err := server.Write(line); err != nil {
+				return
+			}
+		}
+	}()
+	client.SetDeadline(time.Now().Add(3 * time.Second))
+	if _, _, _, err := query(client, "example.com"); err == nil {
+		t.Fatal("endless headers must fail")
+	} else if ne, ok := err.(net.Error); ok && ne.Timeout() {
+		t.Fatalf("read until the deadline (%v): the reply isn't capped", err)
 	}
 }
 

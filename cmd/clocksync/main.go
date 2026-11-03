@@ -20,6 +20,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -177,7 +178,9 @@ func query(c net.Conn, host string) (date, sent, recv time.Time, err error) {
 	if err = req.Write(&out); err != nil {
 		return
 	}
-	br := bufio.NewReader(c)
+	// The reply is read before the chain is verified, so cap it: a
+	// stranger's endless headers mustn't fill the device's memory.
+	br := bufio.NewReader(io.LimitReader(c, maxReply))
 	sent = time.Now()
 	if _, err = c.Write(out.Bytes()); err != nil {
 		return
@@ -199,6 +202,9 @@ func query(c net.Conn, host string) (date, sent, recv time.Time, err error) {
 	}
 	return
 }
+
+// maxReply caps the bytes read of a server's reply (its headers).
+const maxReply = 64 << 10
 
 // offset is how far the server's clock is ahead of the local one, given
 // the server's Date and the local times the request went out and the reply

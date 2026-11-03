@@ -10,8 +10,9 @@ Tasks and maintenance for a Miyoo Mini Plus: what's running, what starts at boot
 
 - Running programs with their memory and CPU use; **A** ends one (Onion's own processes are protected). **Y** sorts them by CPU, memory or name and can hide Onion's own.
 - The scripts Onion runs at boot, each turned on or off.
-- Storage: free space on the card, and how much each folder takes, largest first (Roms by system, App by app). **A** opens a folder; **X** deletes the selected file or folder after asking.
+- Storage: free space on the card, and how much each folder takes, largest first (Roms by system, App by app). **A** opens a folder; inside one, **X** deletes the selected file or folder after asking.
 - Clean up (**X** on Storage): MiniMart's downloads, MiniTape's saved songs, Onion's game list caches, logs, macOS leftovers (`._` files, `.DS_Store`, `.Trashes`) and empty folders. Each one lists exactly what it deletes before you confirm. Games, saves and settings are never part of a clean-up.
+- Duplicates (**Y** on Storage): games under `Roms` that are byte for byte the same. **X** deletes one copy after asking; the last copy, and a disc that a `.cue`, `.m3u`, `.gdi` or `.ccd` names, are kept.
 - `clocksync`: a boot script that sets the clock from HTTPS servers once Wi-Fi is up, since Onion's own time sync relies on a service that no longer answers.
 
 

@@ -6,6 +6,12 @@ All notable changes are listed here. The format follows
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-03
+
+### Fixed
+
+- clocksync reads at most 64 KB of a server's reply. The reply is read before the server's certificate is checked, so a stranger on the network could send endless headers and use up the memory.
+
 ## [1.1.0] - 2026-11-02
 
 ### Added
@@ -26,6 +32,7 @@ All notable changes are listed here. The format follows
 
 - The first release: running programs, startup scripts, `clocksync`, and settings to sort the programs by CPU, memory or name and to hide Onion's own.
 
-[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/zakijss/MiniTop/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/zakijss/MiniTop/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/zakijss/MiniTop/releases/tag/v1.0.0
