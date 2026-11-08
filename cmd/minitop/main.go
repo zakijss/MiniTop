@@ -62,6 +62,9 @@ const (
 	pages
 )
 
+// tryAgain ends a notice whose error is raw, so it says what to do next.
+const tryAgain = "\n\nTry again."
+
 func mb(b int64) string { return fmt.Sprintf("%.1f MB", float64(b)/(1<<20)) }
 
 func (t *tasks) run() {
@@ -231,7 +234,7 @@ func (t *tasks) end() {
 		return
 	}
 	if err := End(p.PID); err != nil {
-		t.scr.Notice(t.input, "Couldn't end it", err.Error())
+		t.scr.Notice(t.input, "Couldn't end it", err.Error()+tryAgain)
 	}
 	t.procs = t.smp.Sample()
 }
@@ -275,7 +278,7 @@ func (t *tasks) toggle() {
 	}
 	it := t.items[t.run2.Sel]
 	if err := it.Toggle(); err != nil {
-		t.scr.Notice(t.input, "Couldn't change it", err.Error())
+		t.scr.Notice(t.input, "Couldn't change it", err.Error()+tryAgain)
 	}
 	t.items = StartItems()
 }

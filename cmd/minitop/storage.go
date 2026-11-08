@@ -173,11 +173,11 @@ type walker struct {
 
 func newCleanups() map[string]*Cleanup {
 	return map[string]*Cleanup{
-		"minimart": {ID: "minimart", Name: "MiniMart downloads", About: "Thumbnails and downloads", Ask: "Clear MiniMart's downloads?",
+		"minimart": {ID: "minimart", Name: "MiniMart downloads", About: "Thumbnails and downloads", Ask: "Delete MiniMart's downloads?",
 			Note: "MiniMart downloads them again when it needs them."},
-		"minitape": {ID: "minitape", Name: "MiniTape songs", About: "Songs saved while playing", Ask: "Clear MiniTape's songs?",
+		"minitape": {ID: "minitape", Name: "MiniTape songs", About: "Songs saved while playing", Ask: "Delete MiniTape's songs?",
 			Note: "MiniTape downloads songs again when you play them. A song that is downloading right now may stop."},
-		"lists": {ID: "lists", Name: "Game list caches", About: "Onion makes them again", Ask: "Clear the game list caches?",
+		"lists": {ID: "lists", Name: "Game list caches", About: "Onion makes them again", Ask: "Delete the game list caches?",
 			Note: "Onion makes each list again the next time you open that system, so the first open is slower."},
 		"logs": {ID: "logs", Name: "Logs", About: "RetroArch, Onion, big app logs", Ask: "Delete the logs?",
 			Note: "Apps start new logs when they need them."},

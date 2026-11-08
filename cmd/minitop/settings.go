@@ -162,7 +162,7 @@ func (t *tasks) settings() {
 			t.cfg = t.cfg.change(l.Sel, d)
 			if err := saveSettings(t.dir, t.cfg); err != nil {
 				t.cfg = old
-				t.scr.Notice(t.input, "Couldn't save", err.Error())
+				t.scr.Notice(t.input, "Couldn't save", err.Error()+". Check that the card has free space.")
 			}
 		}
 		l.Items = settingsItems(t.cfg)

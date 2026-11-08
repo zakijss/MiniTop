@@ -265,7 +265,7 @@ func (t *tasks) delete(scan *Scan, e Entry) {
 	t.scr.Alert("Deleting…", e.Name)
 	if err := remove(e.Path); err != nil {
 		t.stale = true // part of it may be gone: measure again
-		t.scr.Notice(t.input, "Couldn't delete all of it", err.Error())
+		t.scr.Notice(t.input, "Couldn't delete all of it", err.Error()+tryAgain)
 		return
 	}
 	scan.Forget(e.Path, e.Size, 1, e.Dir)
