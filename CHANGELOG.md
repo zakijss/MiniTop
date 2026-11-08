@@ -6,6 +6,14 @@ All notable changes are listed here. The format follows
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-11-08
+
+### Changed
+
+- Error notices say to try again, and a failed save says to check free space.
+- Clean-up questions say Delete, like their button.
+- Grey and red small text is easier to read (MiniDeck 1.0.3).
+
 ## [1.1.1] - 2026-11-03
 
 ### Fixed
@@ -32,7 +40,8 @@ All notable changes are listed here. The format follows
 
 - The first release: running programs, startup scripts, `clocksync`, and settings to sort the programs by CPU, memory or name and to hide Onion's own.
 
-[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/zakijss/MiniTop/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/zakijss/MiniTop/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/zakijss/MiniTop/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/zakijss/MiniTop/releases/tag/v1.0.0
