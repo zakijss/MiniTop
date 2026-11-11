@@ -89,6 +89,9 @@ func storageSub(root string) (string, int64, int64) {
 func (t *tasks) drawStorage() {
 	s := t.scr
 	sub, free, total := storageSub(t.disk.root)
+	_, prog, done, err := t.disk.state()
+	// START (measure again) has no room in the footer: the line above the
+	// list says it
 	top := s.StaticFrame("Storage", sub,
 		ui.Hint{Button: "A", Label: "Open"}, ui.Hint{Button: "X", Label: "Clean up"}, ui.Hint{Button: "Y", Label: "Duplicates"}, ui.Hint{Button: "B", Label: "Exit"})
 	card := image.Rect(20, top, ui.W-26, top+62)
@@ -111,13 +114,16 @@ func (t *tasks) drawStorage() {
 	s.Bar(image.Rect(card.Min.X+16, card.Max.Y-22, card.Max.X-16, card.Max.Y-10), pct/100, ui.Level(pct))
 	area := image.Rect(20, card.Max.Y+10, ui.W-26, ui.H-58)
 
-	_, prog, done, err := t.disk.state()
 	scan := t.disk.view()
-	if scan != nil && scan.Saved {
-		// the kept measurement, while the card is measured again
-		note := "From " + ago(scan.Measured, time.Now())
+	if scan != nil {
+		note := "Measured " + ago(scan.Measured, time.Now())
+		if scan.Saved { // the kept measurement, while the card is measured again
+			note = "From " + ago(scan.Measured, time.Now())
+		}
 		if done != nil {
 			note += " · measuring again: " + count(prog.Files.Load()) + " files"
+		} else {
+			note += " · START measures again"
 		}
 		s.Text(area.Min.X+4, area.Min.Y-2, ui.Fit(ui.Small, note, area.Dx()-8), ui.Small, ui.Muted)
 		area.Min.Y += ui.LineHeight(ui.Small) + 2
@@ -128,7 +134,7 @@ func (t *tasks) drawStorage() {
 	case scan == nil:
 		msg := "Not measured yet"
 		if err != nil {
-			msg = "Couldn't measure the card: " + err.Error()
+			msg = "Couldn't measure the card: " + err.Error() + ". START tries again."
 		}
 		s.TextCenter(ui.W/2, area.Min.Y+area.Dy()/2-10, ui.Fit(ui.Body, msg, area.Dx()), ui.Body, ui.Muted)
 	default:
@@ -145,6 +151,16 @@ func (t *tasks) drawStorage() {
 		t.run3.Draw(s, area)
 	}
 	s.Present()
+}
+
+// measureAgain measures the card again (START on Storage), for files
+// changed outside MiniTop or after a failed measurement. One already
+// running carries on.
+func (t *tasks) measureAgain() {
+	if _, _, done, _ := t.disk.state(); done == nil {
+		t.disk.again()
+		t.rootScan = nil
+	}
 }
 
 // drawMeasuring shows a running measurement's progress in r.
@@ -224,7 +240,7 @@ func (t *tasks) browse(scan *Scan, d *Dir) {
 			}
 			ents, more = Contents(d)
 		default:
-			l.Handle(ev)
+			handle(&l, ev)
 		}
 	}
 }
@@ -346,7 +362,7 @@ func (t *tasks) cleanup() {
 			}
 			t.cleanupList(scan, c)
 		default:
-			l.Handle(ev)
+			handle(&l, ev)
 		}
 	}
 }
@@ -380,7 +396,7 @@ func (t *tasks) cleanupList(scan *Scan, c *Cleanup) {
 			t.runCleanup(scan, c)
 			return
 		default:
-			l.Handle(ev)
+			handle(&l, ev)
 		}
 	}
 }

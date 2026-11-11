@@ -167,4 +167,8 @@ func TestScreens(t *testing.T) {
 	shot("2-settings", func(tk *tasks) { tk.settings() })
 	shot("3-settings-set", func(tk *tasks) { tk.cfg = Settings{Sort: "name", HideOnion: true}; tk.settings() })
 	shot("4-running-by-name", func(tk *tasks) { tk.cfg = Settings{Sort: "name", HideOnion: true}; tk.drawRunning() })
+	shot("17-startup", func(tk *tasks) {
+		tk.items = []StartItem{{Name: "clocksync", Desc: "At boot, sets the clock from verified HTTPS servers in the background.", On: true}}
+		tk.drawStartup()
+	})
 }

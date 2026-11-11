@@ -6,6 +6,18 @@ All notable changes are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **START** on Running changes the order (CPU, memory, name) without opening Settings; the subtitle says which.
+- **X** on Startup sets the clock now, the way `clocksync` does at boot, and says why if it couldn't.
+- **START** on Storage measures the card again, also after a failed measurement. The line above the list says when it was measured.
+- **L2**/**R2** jump to the top or bottom of every list.
+
+### Changed
+
+- The Running and Startup footers leave out **SELECT** Look to make room; **SELECT** still opens Appearance, which is also in Settings.
+- Built with Go 1.27.4, with updated dependencies.
+
 ## [1.1.2] - 2026-11-08
 
 ### Changed

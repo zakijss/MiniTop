@@ -26,10 +26,10 @@ type Settings struct {
 }
 
 // sorts are the orders Settings offers, as saved and as shown.
-var sorts = []struct{ id, name, about string }{
-	{"", "CPU", "Busiest first"},
-	{"memory", "Memory", "Largest first"},
-	{"name", "Name", "A to Z"},
+var sorts = []struct{ id, name, about, by string }{
+	{"", "CPU", "Busiest first", "CPU"},
+	{"memory", "Memory", "Largest first", "memory"},
+	{"name", "Name", "A to Z", "name"},
 }
 
 func sortIndex(id string) int {
@@ -153,18 +153,23 @@ func (t *tasks) settings() {
 		appearance := l.Sel == len(l.Items)-1
 		switch {
 		case d == 0 || (appearance && ev.Button != ui.A):
-			l.Handle(ev)
+			handle(&l, ev)
 			continue
 		case appearance:
 			t.scr.Appearance(t.input)
 		default:
-			old := t.cfg
-			t.cfg = t.cfg.change(l.Sel, d)
-			if err := saveSettings(t.dir, t.cfg); err != nil {
-				t.cfg = old
-				t.scr.Notice(t.input, "Couldn't save", err.Error()+". Check that the card has free space.")
-			}
+			t.setSettings(t.cfg.change(l.Sel, d))
 		}
 		l.Items = settingsItems(t.cfg)
 	}
+}
+
+// setSettings uses and saves c; if it can't be saved, the settings stay
+// as they were.
+func (t *tasks) setSettings(c Settings) {
+	if err := saveSettings(t.dir, c); err != nil {
+		t.scr.Notice(t.input, "Couldn't save", err.Error()+". Check that the card has free space.")
+		return
+	}
+	t.cfg = c
 }

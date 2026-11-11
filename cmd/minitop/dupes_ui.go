@@ -128,7 +128,7 @@ func (t *tasks) duplicates() {
 				t.dupGroup(l.Sel)
 			}
 		default:
-			l.Handle(ev)
+			handle(&l, ev)
 		}
 	}
 }
@@ -216,7 +216,7 @@ func (t *tasks) dupGroup(gi int) {
 				return
 			}
 		default:
-			l.Handle(ev)
+			handle(&l, ev)
 		}
 	}
 }

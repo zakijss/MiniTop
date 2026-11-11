@@ -79,3 +79,36 @@ func TestActs(t *testing.T) {
 		}
 	}
 }
+
+func TestHandleJumps(t *testing.T) {
+	l := ui.List{Items: make([]ui.Item, 10), Sel: 4}
+	handle(&l, ui.Event{Button: ui.R2, Pressed: true})
+	if l.Sel != 9 {
+		t.Errorf("R2: Sel %d, want 9", l.Sel)
+	}
+	handle(&l, ui.Event{Button: ui.L2, Pressed: true})
+	if l.Sel != 0 {
+		t.Errorf("L2: Sel %d, want 0", l.Sel)
+	}
+	handle(&l, ui.Event{Button: ui.Down, Pressed: true})
+	if l.Sel != 1 {
+		t.Errorf("Down: Sel %d, want 1", l.Sel)
+	}
+	empty := ui.List{}
+	handle(&empty, ui.Event{Button: ui.R2, Pressed: true})
+	if empty.Sel != 0 {
+		t.Errorf("R2 on an empty list: Sel %d", empty.Sel)
+	}
+}
+
+func TestClockLine(t *testing.T) {
+	for in, want := range map[string]string{
+		"2026/11/11 10:00:01 github.com: i/o timeout\n2026/11/11 10:00:02 only 1 server(s) answered: clock not changed\n": "Only 1 server(s) answered: clock not changed",
+		"no servers answered": "No servers answered",
+		"":                    "",
+	} {
+		if got := clockLine([]byte(in)); got != want {
+			t.Errorf("clockLine(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

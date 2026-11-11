@@ -131,3 +131,17 @@ func OnionServices() []StartItem {
 	}
 	return out
 }
+
+// clockLine is the last thing clocksync logged, without the log's date and
+// time, to say why it failed ("" if it logged nothing).
+func clockLine(out []byte) string {
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	l := strings.TrimSpace(lines[len(lines)-1])
+	if f := strings.SplitN(l, " ", 3); len(f) == 3 && strings.Count(f[0], "/") == 2 && strings.Count(f[1], ":") == 2 {
+		l = f[2]
+	}
+	if l == "" {
+		return ""
+	}
+	return strings.ToUpper(l[:1]) + l[1:]
+}

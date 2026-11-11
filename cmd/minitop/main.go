@@ -4,9 +4,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"log"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -114,10 +117,20 @@ func (t *tasks) run() {
 					t.end()
 				}
 			case ui.X:
-				if t.page == pageStorage {
+				switch t.page {
+				case pageStartup:
+					t.syncClock()
+				case pageStorage:
 					t.cleanup()
-				} else {
+				default:
 					t.procs = t.smp.Sample()
+				}
+			case ui.Start:
+				switch t.page {
+				case pageRunning:
+					t.setSettings(t.cfg.change(0, 1))
+				case pageStorage:
+					t.measureAgain()
 				}
 			case ui.Y:
 				if t.page == pageStorage {
@@ -130,14 +143,27 @@ func (t *tasks) run() {
 			default:
 				switch t.page {
 				case pageStartup:
-					t.run2.Handle(ev)
+					handle(&t.run2, ev)
 				case pageStorage:
-					t.run3.Handle(ev)
+					handle(&t.run3, ev)
 				default:
-					t.run1.Handle(ev)
+					handle(&t.run1, ev)
 				}
 			}
 		}
+	}
+}
+
+// handle moves l's selection. L2 and R2 jump to the first and last row,
+// which List.Handle doesn't do.
+func handle(l *ui.List, ev ui.Event) {
+	switch {
+	case ev.Button == ui.L2 && len(l.Items) > 0:
+		l.Sel = 0
+	case ev.Button == ui.R2 && len(l.Items) > 0:
+		l.Sel = len(l.Items) - 1
+	default:
+		l.Handle(ev)
 	}
 }
 
@@ -182,9 +208,10 @@ func (t *tasks) drawRunning() {
 		cpu += p.CPU
 	}
 	// X refreshes too, but the list does that every 2 s by itself, so its
-	// hint gives way to Settings.
-	top := s.StaticFrame("Running", fmt.Sprintf("%s free of %s · CPU %.0f%%", mb(avail), mb(total), cpu),
-		ui.Hint{Button: "A", Label: "End"}, ui.Hint{Button: "R1", Label: "Startup"}, ui.Hint{Button: "Y", Label: "Settings"}, ui.AppearanceHint, ui.Hint{Button: "B", Label: "Exit"})
+	// hint gives way to Sort; SELECT's Appearance is also in Settings, so
+	// its hint gives way too.
+	top := s.StaticFrame("Running", fmt.Sprintf("%s free of %s · CPU %.0f%% · by %s", mb(avail), mb(total), cpu, sorts[sortIndex(t.cfg.Sort)].by),
+		ui.Hint{Button: "A", Label: "End"}, ui.Hint{Button: "START", Label: "Sort"}, ui.Hint{Button: "R1", Label: "Startup"}, ui.Hint{Button: "Y", Label: "Settings"}, ui.Hint{Button: "B", Label: "Exit"})
 	t.shown = arrange(t.procs, t.cfg)
 	items := make([]ui.Item, len(t.shown))
 	for i, p := range t.shown {
@@ -242,7 +269,7 @@ func (t *tasks) end() {
 func (t *tasks) drawStartup() {
 	s := t.scr
 	top := s.StaticFrame("Startup", "At boot: "+OnionStartApp()+" (change in Tweaks › System)",
-		ui.Hint{Button: "A", Label: "On / off"}, ui.Hint{Button: "R1", Label: "Storage"}, ui.AppearanceHint, ui.Hint{Button: "B", Label: "Exit"})
+		ui.Hint{Button: "A", Label: "On / off"}, ui.Hint{Button: "X", Label: "Set clock"}, ui.Hint{Button: "R1", Label: "Storage"}, ui.Hint{Button: "B", Label: "Exit"})
 	var items []ui.Item
 	for _, it := range t.items {
 		state := "Off"
@@ -281,4 +308,22 @@ func (t *tasks) toggle() {
 		t.scr.Notice(t.input, "Couldn't change it", err.Error()+tryAgain)
 	}
 	t.items = StartItems()
+}
+
+// syncClock runs clocksync now (X on Startup), as the boot script does, for
+// when Wi-Fi came up after it gave up.
+func (t *tasks) syncClock() {
+	t.scr.Alert("Setting the clock…", "Asking time servers over HTTPS")
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, filepath.Join(t.dir, "clocksync"), "-wait", "15s").CombinedOutput()
+	if err != nil {
+		why := clockLine(out)
+		if why == "" {
+			why = err.Error()
+		}
+		t.scr.Notice(t.input, "Couldn't set the clock", why+". Check that Wi-Fi is on and try again.")
+		return
+	}
+	t.scr.Notice(t.input, "Clock set", "The clock now matches the time servers.")
 }
