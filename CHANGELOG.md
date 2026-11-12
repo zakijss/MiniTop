@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-12
+
 ### Added
 
 - **START** on Running changes the order (CPU, memory, name) without opening Settings; the subtitle says which.
@@ -52,7 +54,8 @@ All notable changes are listed here. The format follows
 
 - The first release: running programs, startup scripts, `clocksync`, and settings to sort the programs by CPU, memory or name and to hide Onion's own.
 
-[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/zakijss/MiniTop/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/zakijss/MiniTop/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/zakijss/MiniTop/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/zakijss/MiniTop/compare/v1.0.0...v1.1.0
