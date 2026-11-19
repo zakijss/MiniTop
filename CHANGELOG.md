@@ -6,6 +6,19 @@ All notable changes are listed here. The format follows
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-19
+
+### Added
+
+- Running shows the swap in use beside the free memory, when there is a swap file.
+- After turning a startup script on or off, the line above the list says it applies from the next boot, and that what it started keeps running until then.
+- MiniFin's video player has its own name in Running.
+
+### Fixed
+
+- **A** on Running no longer forces (SIGKILL) MiniFin's video player or ffplay: they are asked to quit and given five seconds, and if one is still there MiniTop says so. Forcing a video player can freeze the screen until a restart.
+- Ending a program checks that its PID still belongs to it before each signal, so a program that quit while the question was on screen can't take another one down with it. A program that quit but wasn't yet collected by its parent counts as ended instead of being forced.
+
 ## [1.2.1] - 2026-11-12
 
 ### Changed
@@ -60,7 +73,8 @@ All notable changes are listed here. The format follows
 
 - The first release: running programs, startup scripts, `clocksync`, and settings to sort the programs by CPU, memory or name and to hide Onion's own.
 
-[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/zakijss/MiniTop/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/zakijss/MiniTop/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/zakijss/MiniTop/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/zakijss/MiniTop/compare/v1.1.1...v1.1.2
