@@ -1,9 +1,13 @@
 package main
 
 import (
+	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/zakijss/minideck/ui"
 )
@@ -23,6 +27,7 @@ func TestDescribe(t *testing.T) {
 		{"dropbear", []string{"dropbear", "-R"}, "dropbear", true},
 		{"dropbearmulti", []string{"./dropbearmulti", "dropbear", "-s"}, "dropbearmulti", false},
 		{"sleep", []string{"sleep", "300"}, "sleep", false},
+		{"minifin-player", []string{"/mnt/SDCARD/App/MiniFin/minifin-player", "--url", "x"}, "MiniFin video player", false},
 	} {
 		name, prot := describe(Proc{Comm: tc.comm, Args: tc.args})
 		if name != tc.name || (prot != "") != tc.prot {
@@ -110,5 +115,71 @@ func TestClockLine(t *testing.T) {
 		if got := clockLine([]byte(in)); got != want {
 			t.Errorf("clockLine(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+// End asks first and forces only programs it may force, and never signals a
+// PID that now belongs to another program.
+func TestEnd(t *testing.T) {
+	termWait, gentleWait = 300*time.Millisecond, 300*time.Millisecond
+	start := func(script string) (*exec.Cmd, Proc) {
+		t.Helper()
+		c := exec.Command("sh", "-c", script)
+		if err := c.Start(); err != nil {
+			t.Skip("no sh:", err)
+		}
+		t.Cleanup(func() { c.Process.Kill(); c.Wait() })
+		time.Sleep(100 * time.Millisecond) // let the trap be set
+		for _, p := range newSampler().Sample() {
+			if p.PID == c.Process.Pid {
+				return c, p
+			}
+		}
+		t.Skip("no /proc")
+		return nil, Proc{}
+	}
+	alive := func(p Proc) bool { return running(p.PID, p.start) }
+
+	// quits on SIGTERM; left a zombie (not waited for) counts as gone
+	_, p := start("sleep 30")
+	if err := End(p); err != nil || alive(p) {
+		t.Fatalf("sleep: %v, alive %v", err, alive(p))
+	}
+	// ignores SIGTERM: forced
+	_, p = start("trap '' TERM; while :; do sleep 0.1; done")
+	if err := End(p); err != nil || alive(p) {
+		t.Fatalf("forced: %v, alive %v", err, alive(p))
+	}
+	// the same, as MiniFin's player: never forced
+	_, p = start("trap '' TERM; while :; do sleep 0.1; done")
+	p.Comm = "minifin-player"
+	if err := End(p); !errors.Is(err, errStillRunning) || !alive(p) {
+		t.Fatalf("player: %v, alive %v", err, alive(p))
+	}
+	// the PID now belongs to another program: left alone
+	_, p = start("sleep 30")
+	p.start++
+	if err := End(p); err != nil || !running(p.PID, p.start-1) {
+		t.Fatalf("reused PID: %v", err)
+	}
+}
+
+func TestMemLine(t *testing.T) {
+	m := parseMeminfo("MemTotal:         100352 kB\nMemFree:  1 kB\nMemAvailable:      46080 kB\nSwapTotal:        131072 kB\nSwapFree:         128000 kB\n")
+	if got, want := memLine(m), "45.0 MB free of 98.0 MB · swap 3.0 of 128.0 MB"; got != want {
+		t.Errorf("memLine = %q, want %q", got, want)
+	}
+	delete(m, "SwapTotal")
+	if got, want := memLine(m), "45.0 MB free of 98.0 MB"; got != want {
+		t.Errorf("no swap: %q, want %q", got, want)
+	}
+}
+
+func TestToggleNote(t *testing.T) {
+	if got := toggleNote(StartItem{Name: "clocksync", On: true}); !strings.Contains(got, "off from the next boot") {
+		t.Errorf("off: %q", got)
+	}
+	if got := toggleNote(StartItem{Name: "clocksync"}); got != "clocksync is on from the next boot" {
+		t.Errorf("on: %q", got)
 	}
 }

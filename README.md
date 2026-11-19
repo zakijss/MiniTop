@@ -8,8 +8,8 @@
 
 Tasks and maintenance for a Miyoo Mini Plus: what's running, what starts at boot and what fills the SD card. It also keeps the clock right. Part of [MiniDeck](https://github.com/zakijss/MiniDeck).
 
-- Running programs with their memory and CPU use; **A** ends one (Onion's own processes are protected). **START** sorts them by CPU, memory or name; **Y** opens Settings, which can also hide Onion's own.
-- The scripts Onion runs at boot, each turned on or off. **X** sets the clock now, for when Wi-Fi came up after boot.
+- Running programs with their memory and CPU use, and the free memory and swap in use above them; **A** ends one after asking (Onion's own processes are protected). A program is asked to quit and forced two seconds later, except MiniFin's video player and ffplay, which are never forced: forcing a video player can freeze the screen until a restart. **START** sorts them by CPU, memory or name; **Y** opens Settings, which can also hide Onion's own.
+- The scripts Onion runs at boot, each turned on or off; the line above the list then says it applies from the next boot. **X** sets the clock now, for when Wi-Fi came up after boot.
 - Storage: free space on the card, and how much each folder takes, largest first (Roms by system, App by app), with when it was measured. **START** measures again. **A** opens a folder; inside one, **X** deletes the selected file or folder after asking.
 - Clean up (**X** on Storage): MiniMart's downloads, MiniTape's saved songs, Onion's game list caches, logs, macOS leftovers (`._` files, `.DS_Store`, `.Trashes`) and empty folders. Each one lists exactly what it deletes before you confirm. Games, saves and settings are never part of a clean-up.
 - Duplicates (**Y** on Storage): games under `Roms` that are byte for byte the same. **X** deletes one copy after asking; the last copy, and a disc that a `.cue`, `.m3u`, `.gdi` or `.ccd` names, are kept.

@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"image"
 	"log"
@@ -48,6 +49,9 @@ type tasks struct {
 	run3  ui.List
 	items []StartItem
 	disk  *measurer
+	// startNote says what the last on/off on Startup does, until the page
+	// is left
+	startNote string
 	// the Storage page's rows, for the scan they came from
 	rootScan *Scan
 	rootEnts []Entry
@@ -175,6 +179,7 @@ func (t *tasks) turn(next bool) {
 	} else {
 		t.page = (t.page + pages - 1) % pages
 	}
+	t.startNote = ""
 	switch t.page {
 	case pageStartup:
 		t.items = StartItems()
@@ -202,7 +207,6 @@ func acts(ev ui.Event) bool {
 
 func (t *tasks) drawRunning() {
 	s := t.scr
-	avail, total := Memory()
 	var cpu float64
 	for _, p := range t.procs {
 		cpu += p.CPU
@@ -210,7 +214,7 @@ func (t *tasks) drawRunning() {
 	// X refreshes too, but the list does that every 2 s by itself, so its
 	// hint gives way to Sort; SELECT's Appearance is also in Settings, so
 	// its hint gives way too.
-	top := s.StaticFrame("Running", fmt.Sprintf("%s free of %s · CPU %.0f%% · by %s", mb(avail), mb(total), cpu, sorts[sortIndex(t.cfg.Sort)].by),
+	top := s.StaticFrame("Running", fmt.Sprintf("%s · CPU %.0f%% · by %s", memLine(meminfo()), cpu, sorts[sortIndex(t.cfg.Sort)].by),
 		ui.Hint{Button: "A", Label: "End"}, ui.Hint{Button: "START", Label: "Sort"}, ui.Hint{Button: "R1", Label: "Startup"}, ui.Hint{Button: "Y", Label: "Settings"}, ui.Hint{Button: "B", Label: "Exit"})
 	t.shown = arrange(t.procs, t.cfg)
 	items := make([]ui.Item, len(t.shown))
@@ -256,11 +260,15 @@ func (t *tasks) end() {
 		warn = "Better: open MiniScale and turn it off, so it saves its state. Ending it here drops the tailnet until it's started again."
 	case p.Name == "MiniTape player":
 		warn = "The music stops. MiniTape starts it again when you open it."
+	case gentle(p):
+		warn = "Playback stops. It is asked to quit and never forced, since forcing a video player can freeze the screen until a restart."
 	}
 	if !t.scr.Confirm(t.input, "End "+p.Name+"?", warn, "End") {
 		return
 	}
-	if err := End(p.PID); err != nil {
+	if err := End(p); errors.Is(err, errStillRunning) {
+		t.scr.Notice(t.input, p.Name+" is still running", "It was asked to quit and hasn't yet. It isn't forced, since that can freeze the screen. Try again in a moment.")
+	} else if err != nil {
 		t.scr.Notice(t.input, "Couldn't end it", err.Error()+tryAgain)
 	}
 	t.procs = t.smp.Sample()
@@ -268,7 +276,11 @@ func (t *tasks) end() {
 
 func (t *tasks) drawStartup() {
 	s := t.scr
-	top := s.StaticFrame("Startup", "At boot: "+OnionStartApp()+" (change in Tweaks › System)",
+	sub := t.startNote
+	if sub == "" {
+		sub = "At boot: " + OnionStartApp() + " (change in Tweaks › System)"
+	}
+	top := s.StaticFrame("Startup", sub,
 		ui.Hint{Button: "A", Label: "On / off"}, ui.Hint{Button: "X", Label: "Set clock"}, ui.Hint{Button: "R1", Label: "Storage"}, ui.Hint{Button: "B", Label: "Exit"})
 	var items []ui.Item
 	for _, it := range t.items {
@@ -306,8 +318,19 @@ func (t *tasks) toggle() {
 	it := t.items[t.run2.Sel]
 	if err := it.Toggle(); err != nil {
 		t.scr.Notice(t.input, "Couldn't change it", err.Error()+tryAgain)
+	} else {
+		t.startNote = toggleNote(it)
 	}
 	t.items = StartItems()
+}
+
+// toggleNote says what turning it on or off did: it applies from the next
+// boot, and turning one off doesn't stop what it already started.
+func toggleNote(it StartItem) string {
+	if it.On {
+		return it.Name + " is off from the next boot (what it started runs on until then)"
+	}
+	return it.Name + " is on from the next boot"
 }
 
 // syncClock runs clocksync now (X on Startup), as the boot script does, for

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,6 +22,7 @@ type Proc struct {
 	RSS       int64   // bytes
 	CPU       float64 // percent of the whole CPU since the last sample
 	ticks     uint64
+	start     uint64 // when it started, in ticks after boot: tells a reused PID apart
 	Protected string // why it can't be ended ("" = it can)
 }
 
@@ -39,6 +41,7 @@ var friendly = map[string]string{
 	"gameSwitcher":    "Onion game switcher",
 	"retroarch":       "RetroArch (game)",
 	"ffplay":          "Audio player (ffplay)",
+	"minifin-player":  "MiniFin video player",
 	"filebrowser":     "File server (HTTP)",
 	"bftpd":           "FTP server",
 	"smbd":            "Samba file sharing",
@@ -144,6 +147,7 @@ func (s *sampler) Sample() []Proc {
 		ut, _ := strconv.ParseUint(f[11], 10, 64)
 		st, _ := strconv.ParseUint(f[12], 10, 64)
 		p.ticks = ut + st
+		p.start, _ = strconv.ParseUint(f[19], 10, 64)
 		rss, _ := strconv.ParseInt(f[21], 10, 64)
 		p.RSS = rss * page
 		if c, err := os.ReadFile(fmt.Sprintf("/proc/%d/comm", pid)); err == nil {
@@ -212,37 +216,98 @@ func describe(p Proc) (name, protected string) {
 	return exe, protected
 }
 
-// End asks a program to quit, then forces it after two seconds.
-func End(pid int) error {
-	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
+// termOnly are the programs End never forces (SIGKILL): a video player
+// killed outright can wedge the display driver and freeze the screen until
+// a restart, so MiniFin only ever asks its players to quit too.
+var termOnly = map[string]bool{"minifin-player": true, "ffplay": true}
+
+// gentle reports whether End only asks p to quit.
+func gentle(p Proc) bool {
+	return termOnly[p.Comm] || len(p.Args) > 0 && termOnly[filepath.Base(p.Args[0])]
+}
+
+// errStillRunning: a program End only asks to quit hasn't yet.
+var errStillRunning = errors.New("asked to quit, still running")
+
+// termWait is how long End waits after SIGTERM, and gentleWait for a
+// program it won't force (as long as MiniFin gives its players).
+var termWait, gentleWait = 2 * time.Second, 5 * time.Second
+
+// End asks a program to quit, then forces it if it is still there after
+// termWait, unless it is gentle. Before each signal it checks that the PID
+// is still the program that was listed: one that ended while the question
+// was on screen may have handed its PID to another.
+func End(p Proc) error {
+	if !running(p.PID, p.start) {
+		return nil
+	}
+	if err := syscall.Kill(p.PID, syscall.SIGTERM); err != nil {
 		return err
 	}
-	for i := 0; i < 20; i++ {
+	wait := termWait
+	if gentle(p) {
+		wait = gentleWait
+	}
+	for end := time.Now().Add(wait); time.Now().Before(end); {
 		time.Sleep(100 * time.Millisecond)
-		if syscall.Kill(pid, 0) != nil {
+		if !running(p.PID, p.start) {
 			return nil
 		}
 	}
-	return syscall.Kill(pid, syscall.SIGKILL)
+	if gentle(p) {
+		return errStillRunning
+	}
+	if err := syscall.Kill(p.PID, syscall.SIGKILL); err != nil {
+		return err
+	}
+	// gone for the list sampled next
+	for i := 0; i < 10 && running(p.PID, p.start); i++ {
+		time.Sleep(100 * time.Millisecond)
+	}
+	return nil
+}
+
+// running reports whether pid is still the program that started at start:
+// not gone, not a zombie left for its parent to collect, not a newer
+// program with the same PID.
+func running(pid int, start uint64) bool {
+	b, err := os.ReadFile(fmt.Sprintf("/proc/%d/stat", pid))
+	if err != nil {
+		return false
+	}
+	f := statFields(string(b))
+	return len(f) > 19 && f[0] != "Z" && f[19] == strconv.FormatUint(start, 10)
+}
+
+// meminfo is /proc/meminfo's fields, in bytes.
+func meminfo() map[string]int64 {
+	b, _ := os.ReadFile("/proc/meminfo")
+	return parseMeminfo(string(b))
+}
+
+func parseMeminfo(s string) map[string]int64 {
+	m := map[string]int64{}
+	for _, l := range strings.Split(s, "\n") {
+		k, v, ok := strings.Cut(l, ":")
+		if n, err := strconv.ParseInt(strings.TrimSuffix(strings.TrimSpace(v), " kB"), 10, 64); ok && err == nil {
+			m[k] = n * 1024
+		}
+	}
+	return m
 }
 
 // Memory returns available and total RAM in bytes.
 func Memory() (avail, total int64) {
-	f, err := os.Open("/proc/meminfo")
-	if err != nil {
-		return 0, 0
+	m := meminfo()
+	return m["MemAvailable"], m["MemTotal"]
+}
+
+// memLine is the memory part of the Running subtitle: free RAM, and the
+// swap in use when there is any (Onion can add a swap file).
+func memLine(m map[string]int64) string {
+	s := fmt.Sprintf("%s free of %s", mb(m["MemAvailable"]), mb(m["MemTotal"]))
+	if t := m["SwapTotal"]; t > 0 {
+		s += fmt.Sprintf(" · swap %.1f of %s", float64(t-m["SwapFree"])/(1<<20), mb(t))
 	}
-	defer f.Close()
-	sc := bufio.NewScanner(f)
-	for sc.Scan() {
-		k, v, _ := strings.Cut(sc.Text(), ":")
-		n, _ := strconv.ParseInt(strings.TrimSuffix(strings.TrimSpace(v), " kB"), 10, 64)
-		switch k {
-		case "MemTotal":
-			total = n * 1024
-		case "MemAvailable":
-			avail = n * 1024
-		}
-	}
-	return
+	return s
 }
