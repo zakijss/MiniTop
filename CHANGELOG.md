@@ -6,6 +6,12 @@ All notable changes are listed here. The format follows
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-11-19
+
+### Fixed
+
+- The memory line above Running fits the screen with the swap shown: "58.9 of 100.9 MB free · 4.8 MB swap".
+
 ## [1.3.0] - 2026-11-19
 
 ### Added
@@ -73,7 +79,8 @@ All notable changes are listed here. The format follows
 
 - The first release: running programs, startup scripts, `clocksync`, and settings to sort the programs by CPU, memory or name and to hide Onion's own.
 
-[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/zakijss/MiniTop/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/zakijss/MiniTop/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/zakijss/MiniTop/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/zakijss/MiniTop/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/zakijss/MiniTop/compare/v1.1.2...v1.2.0

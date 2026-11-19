@@ -166,11 +166,11 @@ func TestEnd(t *testing.T) {
 
 func TestMemLine(t *testing.T) {
 	m := parseMeminfo("MemTotal:         100352 kB\nMemFree:  1 kB\nMemAvailable:      46080 kB\nSwapTotal:        131072 kB\nSwapFree:         128000 kB\n")
-	if got, want := memLine(m), "45.0 MB free of 98.0 MB · swap 3.0 of 128.0 MB"; got != want {
+	if got, want := memLine(m), "45.0 of 98.0 MB free · 3.0 MB swap"; got != want {
 		t.Errorf("memLine = %q, want %q", got, want)
 	}
 	delete(m, "SwapTotal")
-	if got, want := memLine(m), "45.0 MB free of 98.0 MB"; got != want {
+	if got, want := memLine(m), "45.0 of 98.0 MB free"; got != want {
 		t.Errorf("no swap: %q, want %q", got, want)
 	}
 }

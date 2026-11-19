@@ -305,9 +305,10 @@ func Memory() (avail, total int64) {
 // memLine is the memory part of the Running subtitle: free RAM, and the
 // swap in use when there is any (Onion can add a swap file).
 func memLine(m map[string]int64) string {
-	s := fmt.Sprintf("%s free of %s", mb(m["MemAvailable"]), mb(m["MemTotal"]))
+	s := fmt.Sprintf("%.1f of %s free", float64(m["MemAvailable"])/(1<<20), mb(m["MemTotal"]))
 	if t := m["SwapTotal"]; t > 0 {
-		s += fmt.Sprintf(" · swap %.1f of %s", float64(t-m["SwapFree"])/(1<<20), mb(t))
+		// short enough to fit the subtitle at 640 px with the swap shown
+		s += fmt.Sprintf(" · %s swap", mb(t-m["SwapFree"]))
 	}
 	return s
 }
