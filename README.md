@@ -6,31 +6,32 @@
 
 # MiniTop
 
-Tasks and maintenance for a Miyoo Mini Plus: what's running, what starts at boot and what fills the SD card. It also keeps the clock right. Part of [MiniDeck](https://github.com/zakijss/MiniDeck).
+What's running on a Miyoo Mini Plus, what starts at boot and what fills the SD card. It also keeps the clock right. Part of [MiniDeck](https://github.com/zakijss/MiniDeck).
 
-- Running programs with their memory and CPU use, and the free memory and swap in use above them; **A** ends one after asking (Onion's own processes are protected). A program is asked to quit and forced two seconds later, except MiniFin's video player and ffplay, which are never forced: forcing a video player can freeze the screen until a restart. **START** sorts them by CPU, memory or name; **Y** opens Settings, which can also hide Onion's own.
-- The scripts Onion runs at boot, each turned on or off; the line above the list then says it applies from the next boot. **X** sets the clock now, for when Wi-Fi came up after boot.
-- Storage: free space on the card, and how much each folder takes, largest first (Roms by system, App by app), with when it was measured. **START** measures again. **A** opens a folder; inside one, **X** deletes the selected file or folder after asking.
-- Clean up (**X** on Storage): MiniMart's downloads, MiniTape's saved songs, Onion's game list caches, logs, macOS leftovers (`._` files, `.DS_Store`, `.Trashes`) and empty folders. Each one lists exactly what it deletes before you confirm. Games, saves and settings are never part of a clean-up.
-- Duplicates (**Y** on Storage): games under `Roms` that are byte for byte the same. **X** deletes one copy after asking; the last copy, and a disc that a `.cue`, `.m3u`, `.gdi` or `.ccd` names, are kept.
-- `clocksync`: a boot script that sets the clock from HTTPS servers once Wi-Fi is up, since Onion's own time sync relies on a service that no longer answers.
-
+- **Running:** programs with their memory and CPU use, and the free memory and swap above them. **A** ends one after asking (Onion's own processes are protected).
+- **Startup:** the scripts Onion runs at boot, each turned on or off from the next boot.
+- **Storage:** free space on the card and how much each folder takes, largest first (Roms by system, App by app). **A** opens a folder; inside one, **X** deletes the selected file or folder after asking.
+- **Clean up** (**X** on Storage): MiniMart's downloads, MiniTape's saved songs, Onion's game list caches, logs, macOS leftovers (`._` files, `.DS_Store`, `.Trashes`) and empty folders. Each one lists what it deletes before you confirm; games, saves and settings are never part of it.
+- **Duplicates** (**Y** on Storage): games under `Roms` that are byte for byte the same. **X** deletes one copy after asking; the last copy, and a disc that a `.cue`, `.m3u`, `.gdi` or `.ccd` names, are kept.
+- **clocksync:** a boot script that sets the clock from HTTPS servers once Wi-Fi is up, since Onion's own time sync relies on a service that no longer answers.
 
 <p align="center"><img src="docs/desk.jpg" alt="A white Miyoo Mini Plus on a wooden stand next to a mug, showing running programs in MiniTop" width="100%"></p>
 
-## Using it
-
-**L1**/**R1** move between Running, Startup and Storage. **L2**/**R2** jump to the top or bottom of a list, and **SELECT** opens Appearance. Measuring the card takes a few seconds and runs in the background. The card has no trash, so a delete is final. MiniTop won't delete Onion's files, the card's top-level folders, whole app folders (remove apps in MiniMart, which also takes out their boot scripts), MiniKey's vault, or any key or `.enc` file. For daylight saving, put a zone name such as `Europe/Berlin` in `App/MiniTop/timezone`. Turn clocksync off in the startup tab.
-
 ## Install
 
-- **MiniMart:** open [MiniMart](https://github.com/zakijss/MiniMart), then **Apps > MiniTop**. It checks the download and keeps your settings on updates.
-- **Zip:** download `minitop-VERSION.zip` from [Releases](https://github.com/zakijss/MiniTop/releases/latest), unzip it onto the root of the SD card, and restart.
-- **Every MiniDeck app at once:** [minideck-all.zip](https://github.com/zakijss/MiniDeck/releases/latest/download/minideck-all.zip).
+Open [MiniMart](https://github.com/zakijss/MiniMart) and pick **Apps > MiniTop**: it checks the download and keeps your settings on updates. Or unzip `minitop-VERSION.zip` from [Releases](https://github.com/zakijss/MiniTop/releases/latest) onto the root of the SD card and restart. Every MiniDeck app comes in one zip too: [minideck-all.zip](https://github.com/zakijss/MiniDeck/releases/latest/download/minideck-all.zip).
 
-## Requirements
+Needs a Miyoo Mini Plus on Onion OS 4.4, with Wi-Fi. Other devices and firmwares aren't supported.
 
-A Miyoo Mini Plus on Onion OS 4.4, with Wi-Fi. Other devices and firmwares aren't supported.
+## Using it
+
+**L1**/**R1** move between Running, Startup and Storage, **L2**/**R2** jump to the top or bottom of a list, and **SELECT** opens Appearance. On Running, **START** sorts by CPU, memory or name and **Y** opens Settings, which can also hide Onion's own processes. On Startup, **X** sets the clock now, for when Wi-Fi came up after boot; clocksync is turned off there too. On Storage, **START** measures the card again (it takes a few seconds, in the background).
+
+A program is asked to quit and forced two seconds later. MiniFin's video player and ffplay are never forced, since forcing a video player can freeze the screen until a restart.
+
+The card has no trash, so a delete is final. MiniTop won't delete Onion's files, the card's top-level folders, whole app folders (remove apps in MiniMart, which also takes out their boot scripts), MiniKey's vault, or any key or `.enc` file.
+
+For daylight saving, put a zone name such as `Europe/Berlin` in `App/MiniTop/timezone`.
 
 ## Building
 
