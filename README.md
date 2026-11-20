@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/hero.jpg" alt="A grey Miyoo Mini Plus on a stand on a pale stone table with teacups, showing running programs in MiniTop, with a white one and a clear purple one lying beside it" width="100%"></p>
+<p align="center"><img src="docs/hero.jpg" alt="A grey Miyoo Mini Plus on a stand showing running programs in MiniTop, on a grey oak desk in a TV studio, with a desk lamp, an alarm clock and a white one lying beside it" width="100%"></p>
 
 [![CI](https://github.com/zakijss/MiniTop/actions/workflows/ci.yml/badge.svg)](https://github.com/zakijss/MiniTop/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/zakijss/MiniTop)](https://github.com/zakijss/MiniTop/releases)
@@ -15,7 +15,7 @@ What's running on a Miyoo Mini Plus, what starts at boot and what fills the SD c
 - **Duplicates** (**Y** on Storage): games under `Roms` that are byte for byte the same. **X** deletes one copy after asking; the last copy, and a disc that a `.cue`, `.m3u`, `.gdi` or `.ccd` names, are kept.
 - **clocksync:** a boot script that sets the clock from HTTPS servers once Wi-Fi is up, since Onion's own time sync relies on a service that no longer answers.
 
-<p align="center"><img src="docs/desk.jpg" alt="A grey Miyoo Mini Plus on a stand on an oak desk by a keyboard and a mug, showing running programs in MiniTop, with a white one beside it" width="100%"></p>
+<p align="center"><img src="docs/desk.jpg" alt="From above: a clear purple Miyoo Mini Plus showing what starts at boot in MiniTop, on a grey oak desk beside an alarm clock" width="100%"></p>
 
 ## Install
 
